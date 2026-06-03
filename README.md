@@ -6,14 +6,13 @@
 
 ## 🚀 Quick Start
 
-### GUI Tool (No Installation Required!)
+### GUI Tool
 1. Download `KeyOffLoad_Diagnostic_Tool.html`
 2. Double-click to open in **any modern browser** (Chrome, Edge, Firefox)
 3. Click **"Load Demo Data"** → then **"Analyze Log"** to see it in action
 4. Or paste/upload your own NM log files (.asc, .csv, .txt)
 
-> ✅ **100% browser-based** — No Python, no installation, no licenses needed.  
-> ✅ **100% offline** — All processing happens locally; no data is sent anywhere.
+> ✅ **Runs fully offline** — All processing happens locally; no data is sent anywhere.
 
 ---
 
@@ -84,7 +83,7 @@ Six test files are provided in `test_data/` to validate the tool:
 
 ## 📧 Sharing
 
-Just send the `KeyOffLoad_Diagnostic_Tool.html` file to anyone — they can open it directly in their browser without any setup.
+Share the `KeyOffLoad_Diagnostic_Tool.html` file with collaborators for direct local analysis.
 
 ---
 
@@ -108,4 +107,3 @@ For event/demo sharing:
 **Direct paths:**
 - `./Expo_OnePager.md`
 - `./Expo_Showcase_Presentation.pptx`
-
