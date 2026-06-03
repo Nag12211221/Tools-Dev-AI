@@ -42,6 +42,8 @@
                     const id = parts[1];
                     if(lastTime[id] !== undefined) {
                         const delta = time - lastTime[id];
+                        // 5ms threshold is used here as a standard check for high-frequency spoofing.
+                        // Can be made configurable in future iterations.
                         if (delta < 0.005) {
                             output += `<li><span style="color:red">Anomaly detected</span> at ${time}s: Message ${id} arrived too fast (delta: ${delta.toFixed(4)}s)</li>`;
                             anomalies++;
