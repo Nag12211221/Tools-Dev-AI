@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Key-Off Load / NM Wake Diagnostic Tool</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+        }
+        .header {
+            background: rgba(0,0,0,0.3);
+            padding: 20px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid #00d4ff;
+        }
+        .header h1 {
+            font-size: 1.5rem;
+            color: #00d4ff;
+        }
+        .header .badge {
+            background: #00d4ff;
+            color: #1a1a2e;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+        .info-banner {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid #00d4ff;
+            border-radius: 10px;
+            padding: 15px 25px;
+            margin-bottom: 25px;
+        }
+        .info-banner p { font-size: 0.9rem; line-height: 1.6; }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+        .card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 25px;
+        }
+        .card h3 {
+            color: #00d4ff;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+        .upload-zone {
+            border: 2px dashed rgba(0, 212, 255, 0.4);
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .upload-zone:hover {
+            border-color: #00d4ff;
+            background: rgba(0, 212, 255, 0.05);
+        }
+        .upload-zone .icon { font-size: 3rem; margin-bottom: 10px; }
+        .upload-zone p { color: #aaa; }
+        input[type="file"] { display: none; }
+        .btn {
+            background: linear-gradient(135deg, #00d4ff, #0088cc);
+            color: #fff;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,212,255,0.3); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-danger { background: linear-gradient(135deg, #ff4444, #cc0000); }
+        .btn-success { background: linear-gradient(135deg, #00cc66, #009944); }
+        .results-panel {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 25px;
+        }
+        .results-panel h3 { color: #00d4ff; margin-bottom: 15px; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 10px 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        th { color: #00d4ff; font-weight: 600; }
+        .status-awake { color: #ff4444; font-weight: bold; }
+        .status-sleep { color: #00cc66; font-weight: bold; }
+        .status-transition { color: #ffaa00; font-weight: bold; }
+        .timeline {
+            margin-top: 20px;
+            position: relative;
+            padding: 20px 0;
+        }
+        .timeline-bar {
+            height: 40px;
+            background: #1a1a2e;
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .timeline-segment {
+            position: absolute;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .summary-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+        .summary-card .value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+        .summary-card .label { font-size: 0.8rem; color: #aaa; margin-top: 5px; }
+        .demo-data { font-size: 0.85rem; color: #aaa; margin-top: 10px; }
+        textarea {
+            width: 100%;
+            height: 150px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            padding: 12px;
+            color: #e0e0e0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            resize: vertical;
+        }
+        textarea:focus { outline: none; border-color: #00d4ff; }
+        .log-format-info {
+            background: rgba(255,170,0,0.1);
+            border: 1px solid #ffaa00;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+            font-size: 0.8rem;
+        }
+        .violation-row { background: rgba(255, 68, 68, 0.1); }
+        .export-btns { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+        #chartCanvas {
+            width: 100%;
+            height: 300px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+        @media (max-width: 768px) {
+            .grid { grid-template-columns: 1fr; }
+            .summary-cards { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔋 Key-Off Load / NM Wake Diagnostic Tool</h1>
+        <span class="badge">v1.0 — Browser-Based</span>
+    </div>
+
+    <div class="container">
+        <div class="info-banner">
+            <p><strong>Purpose:</strong> Analyze CAN Network Management (NM) logs to identify ECUs that hold the bus awake after key-off,
+               causing parasitic battery drain. Paste or upload your NM log data below to detect sleep/wake violations and pinpoint offending ECUs.</p>
+        </div>
+
+        <div class="grid">
+            <!-- Input Panel -->
+            <div class="card">
+                <h3>📂 Log Input</h3>
+                <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                    <div class="icon">📁</div>
+                    <p>Click or drag & drop .asc / .csv / .txt log file</p>
+                    <p style="font-size: 0.8rem; margin-top: 5px;">(File is processed locally — nothing is uploaded to any server)</p>
+                </div>
+                <input type="file" id="fileInput" accept=".asc,.csv,.txt,.log" onchange="handleFileUpload(event)">
+                <p style="margin: 15px 0 5px; font-weight: bold;">Or paste log data:</p>
+                <textarea id="logInput" placeholder="Paste NM log lines here...
+Example format:
+timestamp, ECU_Name, NM_State, Message_ID
+0.001, BCM, Awake, 0x510
+0.250, TCU, Awake, 0x520
+5.000, BCM, Sleep, 0x510
+..."></textarea>
+                <div class="log-format-info">
+                    <strong>⚠️ Supported formats:</strong> CSV (timestamp, ECU, state, msgID) or ASC (Vector CANalyzer export).
+                    Click "Load Demo Data" to see an example.
+                </div>
+            </div>
+
+            <!-- Configuration Panel -->
+            <div class="card">
+                <h3>⚙️ Analysis Configuration</h3>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; color: #aaa;">Key-Off Timestamp (seconds):</label>
+                    <input type="number" id="keyOffTime" value="2.0" step="0.1" style="width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: #fff;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; color: #aaa;">Max allowed wake time after key-off (seconds):</label>
+                    <input type="number" id="maxWakeTime" value="10.0" step="0.5" style="width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: #fff;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; color: #aaa;">Expected NM Shutdown Timeout (seconds):</label>
+                    <input type="number" id="nmTimeout" value="5.0" step="0.5" style="width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: #fff;">
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 5px; color: #aaa;">Minimum quiescent current threshold (mA):</label>
+                    <input type="number" id="currentThreshold" value="50" step="5" style="width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: #fff;">
+                </div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn" onclick="analyzeLog()">🔍 Analyze Log</button>
+                    <button class="btn btn-success" onclick="loadDemoData()">📊 Load Demo Data</button>
+                    <button class="btn btn-danger" onclick="clearAll()">🗑️ Clear</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-panel" id="resultsPanel" style="display: none;">
+            <h3>📊 Analysis Results</h3>
+            <div class="summary-cards" id="summaryCards"></div>
+            <div id="timelineSection"></div>
+            <div id="ecuTable"></div>
+            <div id="violationsSection"></div>
+            <div class="export-btns">
+                <button class="btn" onclick="exportCSV()">📥 Export CSV Report</button>
+                <button class="btn" onclick="exportJSON()">📥 Export JSON</button>
+                <button class="btn" onclick="printReport()">🖨️ Print Report</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ CORE ENGINE ============
+        let analysisResults = null;
+
+        function parseLogData(text) {
+            const lines = text.trim().split('\n');
+            const entries = [];
+
+            for (let line of lines) {
+                line = line.trim();
+                if (!line || line.startsWith('//') || line.startsWith('#') || line.toLowerCase().startsWith('timestamp')) continue;
+
+                // Try CSV format: timestamp, ECU, state, msgID
+                const csvParts = line.split(/[,\t]+/).map(s => s.trim());
+                if (csvParts.length >= 3) {
+                    const timestamp = parseFloat(csvParts[0]);
+                    if (!isNaN(timestamp)) {
+                        entries.push({
+                            timestamp: timestamp,
+                            ecu: csvParts[1],
+                            state: csvParts[2].toLowerCase(),
+                            msgId: csvParts[3] || 'N/A'
+                        });
+                        continue;
+                    }
+                }
+
+                // Try ASC format: timestamp channel msgID dir ...
+                const ascMatch = line.match(/^\s*([\d.]+)\s+\d+\s+([\dA-Fa-fx]+)\s+(\w+)/);
+                if (ascMatch) {
+                    entries.push({
+                        timestamp: parseFloat(ascMatch[1]),
+                        ecu: 'ECU_' + ascMatch[2],
+                        state: 'awake',
+                        msgId: ascMatch[2]
+                    });
+                }
+            }
+            return entries;
+        }
+
+        function analyzeLog() {
+            const logText = document.getElementById('logInput').value;
+            if (!logText.trim()) {
+                alert('Please paste log data or upload a file first.');
+                return;
+            }
+
+            const keyOffTime = parseFloat(document.getElementById('keyOffTime').value);
+            const maxWakeTime = parseFloat(document.getElementById('maxWakeTime').value);
+            const nmTimeout = parseFloat(document.getElementById('nmTimeout').value);
+            const currentThreshold = parseFloat(document.getElementById('currentThreshold').value);
+
+            const entries = parseLogData(logText);
+            if (entries.length === 0) {
+                alert('No valid log entries found. Please check the format.');
+                return;
+            }
+
+            // Group by ECU
+            const ecuData = {};
+            for (const entry of entries) {
+                if (!ecuData[entry.ecu]) {
+                    ecuData[entry.ecu] = { entries: [], firstSeen: entry.timestamp, lastSeen: entry.timestamp, states: [] };
+                }
+                ecuData[entry.ecu].entries.push(entry);
+                ecuData[entry.ecu].lastSeen = Math.max(ecuData[entry.ecu].lastSeen, entry.timestamp);
+                ecuData[entry.ecu].states.push({ time: entry.timestamp, state: entry.state });
+            }
+
+            // Analyze each ECU
+            const ecuResults = [];
+            let violations = [];
+            const totalTime = Math.max(...entries.map(e => e.timestamp));
+
+            for (const [ecuName, data] of Object.entries(ecuData)) {
+                const lastState = data.states[data.states.length - 1];
+                const sleepEntry = data.states.find(s => s.state.includes('sleep') && s.time > keyOffTime);
+                const wakeAfterKeyOff = data.entries.filter(e => e.timestamp > keyOffTime && (e.state.includes('awake') || e.state.includes('active') || e.state.includes('repeat')));
+
+                const sleepTime = sleepEntry ? sleepEntry.time : null;
+                const timeToSleep = sleepTime ? (sleepTime - keyOffTime) : null;
+                const isViolation = !sleepTime || (timeToSleep && timeToSleep > maxWakeTime);
+                const holdingBusAwake = wakeAfterKeyOff.length > 0 && (!sleepTime || sleepTime > keyOffTime + maxWakeTime);
+
+                const result = {
+                    ecu: ecuName,
+                    firstActivity: data.firstSeen.toFixed(3),
+                    lastActivity: data.lastSeen.toFixed(3),
+                    sleepTime: sleepTime ? sleepTime.toFixed(3) : 'NEVER',
+                    timeToSleep: timeToSleep ? timeToSleep.toFixed(1) + 's' : 'N/A',
+                    totalMessages: data.entries.length,
+                    messagesAfterKeyOff: wakeAfterKeyOff.length,
+                    status: sleepTime && timeToSleep <= nmTimeout ? 'NORMAL' :
+                            sleepTime && timeToSleep <= maxWakeTime ? 'SLOW' :
+                            sleepTime ? 'VIOLATION' : 'STUCK AWAKE',
+                    holdingBusAwake: holdingBusAwake,
+                    states: data.states
+                };
+
+                ecuResults.push(result);
+                if (isViolation || holdingBusAwake) {
+                    violations.push({
+                        ecu: ecuName,
+                        type: !sleepTime ? 'Never entered sleep' : 'Exceeded max wake time',
+                        detail: !sleepTime ? `ECU still active at ${data.lastSeen.toFixed(3)}s` :
+                                `Took ${timeToSleep.toFixed(1)}s to sleep (max: ${maxWakeTime}s)`,
+                        severity: !sleepTime ? 'CRITICAL' : 'WARNING'
+                    });
+                }
+            }
+
+            analysisResults = {
+                ecuResults,
+                violations,
+                totalECUs: ecuResults.length,
+                violatingECUs: violations.length,
+                totalTime,
+                keyOffTime,
+                maxWakeTime,
+                nmTimeout
+            };
+
+            renderResults(analysisResults);
+        }
+
+        function renderResults(results) {
+            const panel = document.getElementById('resultsPanel');
+            panel.style.display = 'block';
+
+            // Summary Cards
+            const normalCount = results.ecuResults.filter(e => e.status === 'NORMAL').length;
+            document.getElementById('summaryCards').innerHTML = `
+                <div class="summary-card">
+                    <div class="value">${results.totalECUs}</div>
+                    <div class="label">Total ECUs Detected</div>
+                </div>
+                <div class="summary-card">
+                    <div class="value" style="color: #ff4444;">${results.violatingECUs}</div>
+                    <div class="label">Violating ECUs</div>
+                </div>
+                <div class="summary-card">
+                    <div class="value" style="color: #00cc66;">${normalCount}</div>
+                    <div class="label">Normal Shutdown</div>
+                </div>
+                <div class="summary-card">
+                    <div class="value">${results.totalTime.toFixed(1)}s</div>
+                    <div class="label">Log Duration</div>
+                </div>
+            `;
+
+            // Timeline
+            let timelineHTML = '<h4 style="margin-top: 20px; color: #00d4ff;">NM State Timeline</h4>';
+            timelineHTML += '<p style="font-size: 0.8rem; color: #aaa; margin: 5px 0;">Red = Awake | Green = Asleep | Yellow = Transitioning | Dashed line = Key-Off</p>';
+
+            for (const ecu of results.ecuResults) {
+                const keyOffPercent = (results.keyOffTime / results.totalTime) * 100;
+                let segments = '';
+
+                // Before key-off (all awake typically)
+                segments += `<div class="timeline-segment" style="left: 0; width: ${keyOffPercent}%; background: rgba(0,150,255,0.4);">${ecu.ecu}</div>`;
+
+                if (ecu.sleepTime !== 'NEVER') {
+                    const sleepPercent = (parseFloat(ecu.sleepTime) / results.totalTime) * 100;
+                    const awakeWidth = sleepPercent - keyOffPercent;
+                    segments += `<div class="timeline-segment" style="left: ${keyOffPercent}%; width: ${awakeWidth}%; background: rgba(255,68,68,0.6);"></div>`;
+                    segments += `<div class="timeline-segment" style="left: ${sleepPercent}%; width: ${100 - sleepPercent}%; background: rgba(0,204,102,0.5);"></div>`;
+                } else {
+                    segments += `<div class="timeline-segment" style="left: ${keyOffPercent}%; width: ${100 - keyOffPercent}%; background: rgba(255,68,68,0.7);">⚠️ STUCK</div>`;
+                }
+
+                timelineHTML += `
+                    <div style="margin: 8px 0;">
+                        <div style="font-size: 0.8rem; margin-bottom: 3px;">${ecu.ecu}</div>
+                        <div class="timeline-bar" style="position: relative;">
+                            ${segments}
+                            <div style="position: absolute; left: ${keyOffPercent}%; top: 0; bottom: 0; width: 2px; background: #ffaa00; z-index: 10;"></div>
+                        </div>
+                    </div>
+                `;
+            }
+            document.getElementById('timelineSection').innerHTML = timelineHTML;
+
+            // ECU Table
+            let tableHTML = '<h4 style="margin-top: 25px; color: #00d4ff;">ECU Detail Table</h4><table><tr><th>ECU</th><th>First Seen</th><th>Last Activity</th><th>Sleep Time</th><th>Time to Sleep</th><th>Msgs After Key-Off</th><th>Status</th></tr>';
+            for (const ecu of results.ecuResults) {
+                const rowClass = (ecu.status === 'VIOLATION' || ecu.status === 'STUCK AWAKE') ? 'violation-row' : '';
+                const statusClass = ecu.status === 'NORMAL' ? 'status-sleep' :
+                                   ecu.status === 'SLOW' ? 'status-transition' : 'status-awake';
+                tableHTML += `<tr class="${rowClass}"><td>${ecu.ecu}</td><td>${ecu.firstActivity}s</td><td>${ecu.lastActivity}s</td><td>${ecu.sleepTime}${ecu.sleepTime !== 'NEVER' ? 's' : ''}</td><td>${ecu.timeToSleep}</td><td>${ecu.messagesAfterKeyOff}</td><td class="${statusClass}">${ecu.status}</td></tr>`;
+            }
+            tableHTML += '</table>';
+            document.getElementById('ecuTable').innerHTML = tableHTML;
+
+            // Violations
+            if (results.violations.length > 0) {
+                let violHTML = '<h4 style="margin-top: 25px; color: #ff4444;">⚠️ Violations Detected</h4><table><tr><th>ECU</th><th>Type</th><th>Detail</th><th>Severity</th></tr>';
+                for (const v of results.violations) {
+                    violHTML += `<tr class="violation-row"><td>${v.ecu}</td><td>${v.type}</td><td>${v.detail}</td><td class="status-awake">${v.severity}</td></tr>`;
+                }
+                violHTML += '</table>';
+                violHTML += `<div style="margin-top: 15px; padding: 15px; background: rgba(255,68,68,0.1); border: 1px solid #ff4444; border-radius: 8px;">
+                    <strong>🔋 Root Cause Summary:</strong><br>
+                    ${results.violations.map(v => `• <strong>${v.ecu}</strong>: ${v.detail}`).join('<br>')}
+                    <br><br><strong>Recommendation:</strong> Investigate NM configuration of flagged ECUs. Check for pending diagnostic sessions, OTA updates, or improper NM repeat message handling.
+                </div>`;
+                document.getElementById('violationsSection').innerHTML = violHTML;
+            } else {
+                document.getElementById('violationsSection').innerHTML = '<p style="margin-top: 15px; color: #00cc66;">✅ All ECUs entered sleep within acceptable timeframe. No Key-Off Load violations detected.</p>';
+            }
+
+            panel.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // ============ DEMO DATA ============
+        function loadDemoData() {
+            const demoData = `timestamp, ECU_Name, NM_State, Message_ID
+0.100, BCM, Awake, 0x510
+0.150, TCU, Awake, 0x520
+0.200, IPC, Awake, 0x530
+0.250, ADAS, Awake, 0x540
+0.300, GWM, Awake, 0x550
+0.500, BCM, Awake, 0x510
+0.600, TCU, Awake, 0x520
+0.700, IPC, Awake, 0x530
+1.000, ADAS, Awake, 0x540
+1.500, GWM, Awake, 0x550
+2.000, BCM, Awake, 0x510
+2.500, TCU, Awake, 0x520
+3.000, IPC, RepeatMsg, 0x530
+3.200, BCM, RepeatMsg, 0x510
+4.000, GWM, Sleep, 0x550
+4.500, IPC, Sleep, 0x530
+5.500, BCM, Sleep, 0x510
+7.000, TCU, Awake, 0x520
+8.000, TCU, Awake, 0x520
+9.000, TCU, Awake, 0x520
+10.000, TCU, Awake, 0x520
+12.000, TCU, Awake, 0x520
+15.000, TCU, Awake, 0x520
+18.000, ADAS, Awake, 0x540
+20.000, TCU, Awake, 0x520
+22.000, ADAS, Sleep, 0x540
+25.000, TCU, Awake, 0x520`;
+
+            document.getElementById('logInput').value = demoData;
+            document.getElementById('keyOffTime').value = '2.0';
+            document.getElementById('maxWakeTime').value = '10.0';
+        }
+
+        // ============ FILE HANDLING ============
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('logInput').value = e.target.result;
+            };
+            reader.readAsText(file);
+        }
+
+        // Drag and drop
+        const uploadZone = document.getElementById('uploadZone');
+        uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.style.borderColor = '#00d4ff'; });
+        uploadZone.addEventListener('dragleave', () => { uploadZone.style.borderColor = 'rgba(0, 212, 255, 0.4)'; });
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.style.borderColor = 'rgba(0, 212, 255, 0.4)';
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(ev) { document.getElementById('logInput').value = ev.target.result; };
+                reader.readAsText(file);
+            }
+        });
+
+        // ============ EXPORT FUNCTIONS ============
+        function exportCSV() {
+            if (!analysisResults) return;
+            let csv = 'ECU,First_Activity,Last_Activity,Sleep_Time,Time_To_Sleep,Messages_After_KeyOff,Status,Holding_Bus_Awake\n';
+            for (const ecu of analysisResults.ecuResults) {
+                csv += `${ecu.ecu},${ecu.firstActivity},${ecu.lastActivity},${ecu.sleepTime},${ecu.timeToSleep},${ecu.messagesAfterKeyOff},${ecu.status},${ecu.holdingBusAwake}\n`;
+            }
+            if (analysisResults.violations.length > 0) {
+                csv += '\nVIOLATIONS\nECU,Type,Detail,Severity\n';
+                for (const v of analysisResults.violations) {
+                    csv += `${v.ecu},${v.type},"${v.detail}",${v.severity}\n`;
+                }
+            }
+            downloadFile(csv, 'KeyOff_Diagnostic_Report.csv', 'text/csv');
+        }
+
+        function exportJSON() {
+            if (!analysisResults) return;
+            downloadFile(JSON.stringify(analysisResults, null, 2), 'KeyOff_Diagnostic_Report.json', 'application/json');
+        }
+
+        function printReport() {
+            window.print();
+        }
+
+        function downloadFile(content, filename, type) {
+            const blob = new Blob([content], { type });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function clearAll() {
+            document.getElementById('logInput').value = '';
+            document.getElementById('resultsPanel').style.display = 'none';
+            analysisResults = null;
+        }
+    </script>
+</body>
+</html>
