@@ -44,6 +44,14 @@
 ```
 ├── KeyOffLoad_Diagnostic_Tool.html   ← GUI Tool (open in browser)
 ├── KeyOffLoad_Presentation.pptx      ← PowerPoint presentation (5 slides)
+├── OUTPUT_ANALYSIS_GUIDE.md          ← How to read & analyze tool output
+├── test_data/
+│   ├── 01_normal_shutdown_PASS.csv       ← All ECUs sleep properly (baseline)
+│   ├── 02_multiple_violators_FAIL.csv    ← 15 ECUs, 7 violations
+│   ├── 03_vector_asc_format.asc          ← Vector CANalyzer ASC format test
+│   ├── 04_edge_cases.csv                 ← Boundary conditions & tricky scenarios
+│   ├── 05_realworld_complex_25ECUs.csv   ← Full vehicle (25 ECUs, 1000+ msgs)
+│   └── 06_stress_test_50ECUs.csv         ← Stress test (50 ECUs, 2700+ msgs)
 └── README.md                         ← This file
 ```
 
@@ -54,6 +62,23 @@
 **Sleep mode failures** where ECUs hold the CAN bus awake after key-off cause:
 - Battery drain (parasitic current > 50mA)
 - Dead battery complaints & warranty claims ($200-500/vehicle)
+
+---
+
+## 🧪 Test Data & Demo
+
+Six test files are provided in `test_data/` to validate the tool:
+
+| File | ECUs | Scenario | Expected |
+|------|:----:|----------|----------|
+| `01_normal_shutdown_PASS.csv` | 8 | All ECUs sleep properly | ✅ Zero violations |
+| `02_multiple_violators_FAIL.csv` | 15 | Mixed good + bad ECUs | ❌ 7 violations |
+| `03_vector_asc_format.asc` | 8 | Real Vector ASC format | ❌ 2 stuck ECUs |
+| `04_edge_cases.csv` | 7 | Re-wake, flapping, border | ❌ Boundary tests |
+| `05_realworld_complex_25ECUs.csv` | 25 | Full vehicle simulation | ❌ 8 violations |
+| `06_stress_test_50ECUs.csv` | 50 | Stress test (2700+ lines) | ❌ 15 violations |
+
+📖 See **[OUTPUT_ANALYSIS_GUIDE.md](OUTPUT_ANALYSIS_GUIDE.md)** for detailed instructions on reading and interpreting results.
 - Time-consuming manual log analysis (8-16 hours → reduced to < 5 minutes)
 
 ---
