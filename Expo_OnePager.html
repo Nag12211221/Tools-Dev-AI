@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Expo One Pager - Key-Off Load Diagnostic Tool</title>
+  <style>
+    :root {
+      --bg:#0b1020; --card:#131a2f; --text:#eef4ff; --muted:#9fb0d3;
+      --c1:#22d3ee; --c2:#f472b6; --c3:#86efac; --c4:#fbbf24;
+    }
+    body {
+      margin:0; font-family: 'Segoe UI', Arial, sans-serif; color:var(--text);
+      background: radial-gradient(circle at 20% 20%, #1f2d5a, #0b1020 45%), linear-gradient(120deg,#091329,#1a1033);
+    }
+    .wrap { max-width: 1100px; margin: 24px auto; padding: 18px; }
+    .hero {
+      background: linear-gradient(135deg, rgba(34,211,238,.18), rgba(244,114,182,.12));
+      border:1px solid rgba(255,255,255,.16); border-radius:18px; padding:22px;
+      box-shadow:0 10px 30px rgba(0,0,0,.35);
+    }
+    h1 { margin:0 0 8px; color:var(--c1); font-size: 2.1rem; }
+    .subtitle { color:var(--muted); margin:0; }
+    .grid { display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:16px; }
+    .card {
+      background: var(--card); border-radius:16px; padding:16px;
+      border:1px solid rgba(255,255,255,.1);
+    }
+    .card h2 { margin:0 0 8px; font-size:1.2rem; }
+    .problem h2 { color:var(--c2);} .solution h2 { color:var(--c3);} .tools h2 { color:var(--c1);} .ppt h2 { color:var(--c4);}
+    ul { margin:8px 0 0 18px; line-height:1.45; }
+    li { margin: 6px 0; color:#d8e2ff; }
+    img { width:100%; border-radius:12px; border:1px solid rgba(255,255,255,.18); margin-top:10px; }
+    .cta {
+      margin-top:16px; background:linear-gradient(90deg, rgba(134,239,172,.16), rgba(251,191,36,.14));
+      border:1px solid rgba(255,255,255,.2); border-radius:14px; padding:14px;
+    }
+    .small { color:var(--muted); font-size:.95rem; }
+    .files { font-family: ui-monospace, Menlo, Consolas, monospace; background:#0a1226; border-radius:10px; padding:10px; }
+    @media (max-width: 900px){ .grid{ grid-template-columns: 1fr; } }
+    @media print { body {background:white; color:#111;} .card,.hero,.cta{border:1px solid #ddd; box-shadow:none;} }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <h1>🔋 Key-Off Load / NM Wake Diagnostic Tool</h1>
+      <p class="subtitle">Expo One-Pager — A practical solution to detect ECUs that keep CAN networks awake and drain vehicle batteries.</p>
+    </section>
+
+    <section class="grid">
+      <article class="card problem">
+        <h2>1) What is the problem?</h2>
+        <ul>
+          <li>After key-off, some ECUs continue sending NM messages and keep the CAN bus awake.</li>
+          <li>This causes parasitic battery drain, dead-battery complaints, and warranty costs.</li>
+          <li>Root-cause analysis is often manual, slow, and difficult across large logs.</li>
+        </ul>
+        <img src="expo_assets/problem_visual.png" alt="Problem visual" />
+      </article>
+
+      <article class="card solution">
+        <h2>2) What solution can we offer?</h2>
+        <ul>
+          <li>A browser-based diagnostic tool that parses NM logs and flags violating ECUs automatically.</li>
+          <li>Shows timeline-based evidence (awake vs sleep) and highlights stuck/slow ECUs.</li>
+          <li>Reduces analysis effort from hours to minutes with export-ready reports.</li>
+        </ul>
+        <img src="expo_assets/solution_flow.png" alt="Solution flow visual" />
+      </article>
+
+      <article class="card tools">
+        <h2>3) Tools for fellow engineers</h2>
+        <ul>
+          <li><b>KeyOffLoad_Diagnostic_Tool.html</b> — run offline, no install required.</li>
+          <li><b>test_data/</b> — realistic + stress datasets for quick hands-on validation.</li>
+          <li><b>OUTPUT_ANALYSIS_GUIDE.md</b> — step-by-step output interpretation.</li>
+          <li>Export options: CSV / JSON / Print for issue tracking and collaboration.</li>
+        </ul>
+        <img src="expo_assets/dashboard_visual.png" alt="Dashboard visual" />
+      </article>
+
+      <article class="card ppt">
+        <h2>4) Presentation to showcase solution</h2>
+        <ul>
+          <li><b>Expo_Showcase_Presentation.pptx</b> is ready for open expo demo.</li>
+          <li>Includes colorful theme, visual story, and easy walkthrough.</li>
+          <li>Recommended demo flow: Problem → Solution → Tools → Live run on stress dataset.</li>
+        </ul>
+        <div class="files">
+          /tmp/workspace/Nag12211221/Tools-Dev-AI/Expo_Showcase_Presentation.pptx
+        </div>
+        <p class="small">Tip: Print this one-pager directly from browser (Ctrl/Cmd + P) for booth handouts.</p>
+      </article>
+    </section>
+
+    <section class="cta">
+      <b>Share package (ready to download):</b>
+      <div class="files" style="margin-top:8px;">
+        Expo_OnePager.html
+        Expo_Showcase_Presentation.pptx
+        expo_assets/problem_visual.png
+        expo_assets/solution_flow.png
+        expo_assets/dashboard_visual.png
+      </div>
+    </section>
+  </div>
+</body>
+</html>

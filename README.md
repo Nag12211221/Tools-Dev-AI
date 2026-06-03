@@ -95,3 +95,18 @@ If you want to extend the tool:
 - The HTML file is self-contained (HTML + CSS + JavaScript in one file)
 - No build tools or dependencies required
 - Edit with any text editor
+
+---
+
+## 🎪 Open Expo Assets
+
+For event/demo sharing:
+
+- `Expo_OnePager.html` — colorful one-pager with visuals, printable handout format
+- `Expo_Showcase_Presentation.pptx` — colorful showcase deck for live presentation
+- `expo_assets/` — visual images used in the one-pager and PPT
+
+**Direct paths:**
+- `/tmp/workspace/Nag12211221/Tools-Dev-AI/Expo_OnePager.html`
+- `/tmp/workspace/Nag12211221/Tools-Dev-AI/Expo_Showcase_Presentation.pptx`
+
