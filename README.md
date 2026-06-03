@@ -1,4 +1,4 @@
-# 🔋 Key-Off Load / NM Wake Diagnostic Tool
+# 🔋 Key-Off Load/NM Wake Diagnostic Tool
 
 **Automated detection of ECUs causing parasitic battery drain after key-off.**
 
