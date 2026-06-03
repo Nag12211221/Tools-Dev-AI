@@ -79,7 +79,6 @@ Six test files are provided in `test_data/` to validate the tool:
 | `06_stress_test_50ECUs.csv` | 50 | Stress test (2700+ lines) | ❌ 15 violations |
 
 📖 See **[OUTPUT_ANALYSIS_GUIDE.md](OUTPUT_ANALYSIS_GUIDE.md)** for detailed instructions on reading and interpreting results.
-- Time-consuming manual log analysis (8-16 hours → reduced to < 5 minutes)
 
 ---
 
