@@ -107,6 +107,6 @@ For event/demo sharing:
 - `expo_assets/` — visual images used in the one-pager and PPT
 
 **Direct paths:**
-- `/tmp/workspace/Nag12211221/Tools-Dev-AI/Expo_OnePager.html`
-- `/tmp/workspace/Nag12211221/Tools-Dev-AI/Expo_Showcase_Presentation.pptx`
+- `./Expo_OnePager.html`
+- `./Expo_Showcase_Presentation.pptx`
 
