@@ -101,11 +101,11 @@ If you want to extend the tool:
 
 For event/demo sharing:
 
-- `Expo_OnePager.html` — colorful one-pager with visuals, printable handout format
+- `Expo_OnePager.md` — professional one-pager summary in markdown format
 - `Expo_Showcase_Presentation.pptx` — colorful showcase deck for live presentation
 - `expo_assets/` — visual images used in the one-pager and PPT
 
 **Direct paths:**
-- `./Expo_OnePager.html`
+- `./Expo_OnePager.md`
 - `./Expo_Showcase_Presentation.pptx`
 
