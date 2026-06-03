@@ -3,107 +3,670 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Expo One Pager - Key-Off Load Diagnostic Tool</title>
+  <title>Key-Off Load / NM Wake Diagnostic Tool — Engineering Expo</title>
   <style>
+    /* ─── Design Tokens ─────────────────────────────────────────── */
     :root {
-      --bg:#0b1020; --card:#131a2f; --text:#eef4ff; --muted:#9fb0d3;
-      --c1:#22d3ee; --c2:#f472b6; --c3:#86efac; --c4:#fbbf24;
+      --navy:     #0d1b2a;
+      --navy-mid: #1b2d3e;
+      --navy-lt:  #253d52;
+      --accent:   #1e6fa8;
+      --accent-lt:#2c8fcf;
+      --gold:     #c8922a;
+      --gold-lt:  #e0a83c;
+      --red:      #c0392b;
+      --green:    #1a7a4a;
+      --white:    #ffffff;
+      --off-white:#f4f6f9;
+      --text:     #1c2b3a;
+      --muted:    #5a6e80;
+      --border:   #d0dce8;
+      --radius:   6px;
+      --shadow:   0 2px 8px rgba(0,0,0,.10);
     }
+
+    /* ─── Reset & Base ──────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 14px; }
     body {
-      margin:0; font-family: 'Segoe UI', Arial, sans-serif; color:var(--text);
-      background: radial-gradient(circle at 20% 20%, #1f2d5a, #0b1020 45%), linear-gradient(120deg,#091329,#1a1033);
+      font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+      background: var(--off-white);
+      color: var(--text);
+      line-height: 1.55;
     }
-    .wrap { max-width: 1100px; margin: 24px auto; padding: 18px; }
-    .hero {
-      background: linear-gradient(135deg, rgba(34,211,238,.18), rgba(244,114,182,.12));
-      border:1px solid rgba(255,255,255,.16); border-radius:18px; padding:22px;
-      box-shadow:0 10px 30px rgba(0,0,0,.35);
+
+    /* ─── Page Shell ────────────────────────────────────────────── */
+    .page {
+      max-width: 1080px;
+      margin: 28px auto;
+      background: var(--white);
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 24px rgba(0,0,0,.10);
     }
-    h1 { margin:0 0 8px; color:var(--c1); font-size: 2.1rem; }
-    .subtitle { color:var(--muted); margin:0; }
-    .grid { display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:16px; }
+
+    /* ─── Header ────────────────────────────────────────────────── */
+    .page-header {
+      background: var(--navy);
+      color: var(--white);
+      padding: 28px 36px 24px;
+      border-bottom: 4px solid var(--accent);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+    }
+    .page-header .branding { flex: 1; }
+    .page-header .category {
+      font-size: .78rem;
+      font-weight: 600;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--accent-lt);
+      margin-bottom: 6px;
+    }
+    .page-header h1 {
+      font-size: 1.65rem;
+      font-weight: 700;
+      line-height: 1.2;
+      color: var(--white);
+    }
+    .page-header .tagline {
+      margin-top: 8px;
+      font-size: .92rem;
+      color: #a8c0d4;
+      max-width: 560px;
+    }
+    .page-header .meta {
+      text-align: right;
+      font-size: .78rem;
+      color: #7a9ab5;
+      white-space: nowrap;
+      padding-top: 4px;
+    }
+    .page-header .meta strong { color: #c8daea; display: block; font-size: .88rem; margin-bottom: 3px; }
+
+    /* ─── Section wrappers ──────────────────────────────────────── */
+    .body-content { padding: 28px 36px; }
+
+    /* ─── Impact Bar ────────────────────────────────────────────── */
+    .impact-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 28px;
+    }
+    .impact-cell {
+      padding: 16px 18px;
+      border-right: 1px solid var(--border);
+      text-align: center;
+    }
+    .impact-cell:last-child { border-right: none; }
+    .impact-cell .val {
+      font-size: 1.7rem;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .impact-cell .val.red  { color: var(--red); }
+    .impact-cell .val.gold { color: var(--gold); }
+    .impact-cell .val.green{ color: var(--green); }
+    .impact-cell .lbl {
+      font-size: .78rem;
+      color: var(--muted);
+      margin-top: 5px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    /* ─── Two-col layout ─────────────────────────────────────────  */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 22px;
+      margin-bottom: 22px;
+    }
+
+    /* ─── Section Headings ──────────────────────────────────────── */
+    .section-label {
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 5px;
+      margin-bottom: 12px;
+    }
+
+    /* ─── Cards ─────────────────────────────────────────────────── */
     .card {
-      background: var(--card); border-radius:16px; padding:16px;
-      border:1px solid rgba(255,255,255,.1);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      background: var(--white);
+      box-shadow: var(--shadow);
     }
-    .card h2 { margin:0 0 8px; font-size:1.2rem; }
-    .problem h2 { color:var(--c2);} .solution h2 { color:var(--c3);} .tools h2 { color:var(--c1);} .ppt h2 { color:var(--c4);}
-    ul { margin:8px 0 0 18px; line-height:1.45; }
-    li { margin: 6px 0; color:#d8e2ff; }
-    img { width:100%; border-radius:12px; border:1px solid rgba(255,255,255,.18); margin-top:10px; }
-    .cta {
-      margin-top:16px; background:linear-gradient(90deg, rgba(134,239,172,.16), rgba(251,191,36,.14));
-      border:1px solid rgba(255,255,255,.2); border-radius:14px; padding:14px;
+    .card.accent-left { border-left: 4px solid var(--accent); }
+    .card.gold-left   { border-left: 4px solid var(--gold); }
+    .card.red-left    { border-left: 4px solid var(--red); }
+    .card.green-left  { border-left: 4px solid var(--green); }
+
+    .card h3 {
+      font-size: .97rem;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 10px;
     }
-    .small { color:var(--muted); font-size:.95rem; }
-    .files { font-family: ui-monospace, Menlo, Consolas, monospace; background:#0a1226; border-radius:10px; padding:10px; }
-    @media (max-width: 900px){ .grid{ grid-template-columns: 1fr; } }
-    @media print { body {background:white; color:#111;} .card,.hero,.cta{border:1px solid #ddd; box-shadow:none;} }
+
+    /* ─── Body text ─────────────────────────────────────────────── */
+    ul.pro-list {
+      list-style: none;
+      padding: 0;
+    }
+    ul.pro-list li {
+      padding: 5px 0 5px 18px;
+      position: relative;
+      font-size: .88rem;
+      color: var(--text);
+      border-bottom: 1px solid #f0f3f7;
+    }
+    ul.pro-list li:last-child { border-bottom: none; }
+    ul.pro-list li::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 13px;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+    ul.pro-list.red li::before    { background: var(--red); }
+    ul.pro-list.gold li::before   { background: var(--gold); }
+    ul.pro-list.green li::before  { background: var(--green); }
+
+    /* ─── Workflow Diagram ──────────────────────────────────────── */
+    .workflow {
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+      margin: 14px 0 0;
+    }
+    .wf-step {
+      flex: 1;
+      background: var(--navy-mid);
+      color: var(--white);
+      padding: 12px 10px;
+      text-align: center;
+      font-size: .8rem;
+      position: relative;
+    }
+    .wf-step .wf-num {
+      font-size: .65rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--accent-lt);
+      display: block;
+      margin-bottom: 4px;
+    }
+    .wf-step .wf-title {
+      font-weight: 700;
+      font-size: .85rem;
+      display: block;
+      margin-bottom: 2px;
+    }
+    .wf-step .wf-sub {
+      color: #9ab8cc;
+      font-size: .75rem;
+    }
+    .wf-step::after {
+      content: '';
+      position: absolute;
+      right: -10px; top: 50%;
+      transform: translateY(-50%);
+      width: 0; height: 0;
+      border-top: 14px solid transparent;
+      border-bottom: 14px solid transparent;
+      border-left: 10px solid var(--navy-mid);
+      z-index: 2;
+    }
+    .wf-step:last-child::after { display: none; }
+    .wf-step:nth-child(2) { background: var(--navy-lt); }
+    .wf-step:nth-child(2)::after { border-left-color: var(--navy-lt); }
+    .wf-step:nth-child(3) { background: var(--accent); }
+    .wf-step:nth-child(3)::after { border-left-color: var(--accent); }
+    .wf-step:nth-child(3) .wf-sub { color: #cce6f8; }
+    .wf-step:nth-child(4) { background: var(--green); }
+    .wf-step:nth-child(4)::after { border-left-color: var(--green); }
+
+    /* ─── Feature Table ─────────────────────────────────────────── */
+    table.feat-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .84rem;
+      margin-top: 4px;
+    }
+    table.feat-table th {
+      background: var(--navy);
+      color: #a8c0d4;
+      font-weight: 600;
+      text-align: left;
+      padding: 7px 10px;
+      font-size: .74rem;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    table.feat-table td {
+      padding: 7px 10px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    table.feat-table tr:last-child td { border-bottom: none; }
+    table.feat-table tr:nth-child(even) td { background: #f8fafc; }
+    .tag {
+      display: inline-block;
+      font-size: .7rem;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 3px;
+      letter-spacing: .04em;
+    }
+    .tag.blue  { background: #dbeeff; color: #1a5c8a; }
+    .tag.green { background: #d6f0e2; color: #1a5c38; }
+    .tag.gold  { background: #fdf0d5; color: #7a560f; }
+
+    /* ─── File Manifest ─────────────────────────────────────────── */
+    .manifest {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .manifest-item {
+      background: var(--off-white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 13px;
+      font-size: .82rem;
+    }
+    .manifest-item .file-name {
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: .8rem;
+      color: var(--accent);
+      font-weight: 600;
+      margin-bottom: 3px;
+      word-break: break-all;
+    }
+    .manifest-item .file-desc {
+      color: var(--muted);
+      font-size: .78rem;
+    }
+
+    /* ─── Call-to-action strip ──────────────────────────────────── */
+    .cta-strip {
+      background: var(--navy);
+      color: var(--white);
+      padding: 16px 36px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      font-size: .85rem;
+      border-top: 3px solid var(--gold);
+    }
+    .cta-strip .cta-left { flex: 1; }
+    .cta-strip .cta-left strong {
+      display: block;
+      font-size: .95rem;
+      margin-bottom: 4px;
+      color: var(--gold-lt);
+    }
+    .cta-strip .cta-left p { color: #9ab8cc; }
+    .cta-strip .cta-steps {
+      display: flex;
+      gap: 16px;
+    }
+    .cta-step {
+      text-align: center;
+      font-size: .78rem;
+      color: #9ab8cc;
+    }
+    .cta-step .cta-n {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+      font-size: .8rem;
+      margin-bottom: 4px;
+    }
+    .cta-step p { max-width: 90px; }
+
+    /* ─── Footer ────────────────────────────────────────────────── */
+    .page-footer {
+      background: var(--off-white);
+      border-top: 1px solid var(--border);
+      padding: 10px 36px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: .74rem;
+      color: var(--muted);
+    }
+
+    /* ─── Print ─────────────────────────────────────────────────── */
+    @media print {
+      body { background: white; }
+      .page { box-shadow: none; border: none; margin: 0; }
+      .page-header { background: #0d1b2a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .cta-strip    { background: #0d1b2a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .wf-step      { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .impact-cell .val { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+
+    /* ─── Responsive ────────────────────────────────────────────── */
+    @media (max-width: 820px) {
+      .two-col, .manifest { grid-template-columns: 1fr; }
+      .impact-bar { grid-template-columns: 1fr 1fr; }
+      .impact-cell:nth-child(2) { border-right: none; }
+      .workflow { flex-direction: column; }
+      .wf-step::after { display: none; }
+      .cta-strip { flex-direction: column; align-items: flex-start; }
+      .cta-steps { flex-wrap: wrap; }
+      .page-header { flex-direction: column; }
+      .page-header .meta { text-align: left; }
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <section class="hero">
-      <h1>🔋 Key-Off Load / NM Wake Diagnostic Tool</h1>
-      <p class="subtitle">Expo One-Pager — A practical solution to detect ECUs that keep CAN networks awake and drain vehicle batteries.</p>
-    </section>
+<div class="page">
 
-    <section class="grid">
-      <article class="card problem">
-        <h2>1) What is the problem?</h2>
-        <ul>
-          <li>After key-off, some ECUs continue sending NM messages and keep the CAN bus awake.</li>
-          <li>This causes parasitic battery drain, dead-battery complaints, and warranty costs.</li>
-          <li>Root-cause analysis is often manual, slow, and difficult across large logs.</li>
-        </ul>
-        <img src="expo_assets/problem_visual.png" alt="Problem visual"small\">[Image unavailable: problem visual]</p>')" />
-      </article>
+  <!-- ── Header ──────────────────────────────────────────────────── -->
+  <header class="page-header">
+    <div class="branding">
+      <p class="category">Engineering Expo &mdash; Diagnostic Tools</p>
+      <h1>Key-Off Load / NM Wake Diagnostic Tool</h1>
+      <p class="tagline">
+        A browser-based, zero-install solution for automated detection of ECUs that prevent CAN network
+        sleep after key-off &mdash; reducing parasitic battery drain and accelerating root-cause analysis.
+      </p>
+    </div>
+    <div class="meta">
+      <strong>Expo One-Pager</strong>
+      Vehicle Diagnostics &bull; CAN / NM<br>
+      Open Expo 2025<br>
+      v1.0
+    </div>
+  </header>
 
-      <article class="card solution">
-        <h2>2) What solution can we offer?</h2>
-        <ul>
-          <li>A browser-based diagnostic tool that parses NM logs and flags violating ECUs automatically.</li>
-          <li>Shows timeline-based evidence (awake vs sleep) and highlights stuck/slow ECUs.</li>
-          <li>Reduces analysis effort from hours to minutes with export-ready reports.</li>
-        </ul>
-        <img src="expo_assets/solution_flow.png" alt="Solution flow visual"small\">[Image unavailable: solution flow]</p>')" />
-      </article>
+  <div class="body-content">
 
-      <article class="card tools">
-        <h2>3) Tools for fellow engineers</h2>
-        <ul>
-          <li><b>KeyOffLoad_Diagnostic_Tool.html</b> — run offline, no install required.</li>
-          <li><b>test_data/</b> — realistic + stress datasets for quick hands-on validation.</li>
-          <li><b>OUTPUT_ANALYSIS_GUIDE.md</b> — step-by-step output interpretation.</li>
-          <li>Export options: CSV / JSON / Print for issue tracking and collaboration.</li>
-        </ul>
-        <img src="expo_assets/dashboard_visual.png" alt="Dashboard visual"small\">[Image unavailable: dashboard visual]</p>')" />
-      </article>
-
-      <article class="card ppt">
-        <h2>4) Presentation to showcase solution</h2>
-        <ul>
-          <li><b>Expo_Showcase_Presentation.pptx</b> is ready for open expo demo.</li>
-          <li>Includes colorful theme, visual story, and easy walkthrough.</li>
-          <li>Recommended demo flow: Problem → Solution → Tools → Live run on stress dataset.</li>
-        </ul>
-        <div class="files">
-          ./Expo_Showcase_Presentation.pptx
-        </div>
-        <p class="small">Tip: Print this one-pager directly from browser (Ctrl/Cmd + P) for booth handouts.</p>
-      </article>
-    </section>
-
-    <section class="cta">
-      <b>Share package (ready to download):</b>
-      <div class="files" style="margin-top:8px;">
-        Expo_OnePager.html
-        Expo_Showcase_Presentation.pptx
-        expo_assets/problem_visual.png
-        expo_assets/solution_flow.png
-        expo_assets/dashboard_visual.png
+    <!-- ── Impact Metrics ────────────────────────────────────────── -->
+    <div class="impact-bar">
+      <div class="impact-cell">
+        <div class="val red">&gt;50 mA</div>
+        <div class="lbl">Parasitic Current Threshold</div>
       </div>
-    </section>
+      <div class="impact-cell">
+        <div class="val gold">$200–500</div>
+        <div class="lbl">Warranty Cost per Vehicle</div>
+      </div>
+      <div class="impact-cell">
+        <div class="val green">Minutes</div>
+        <div class="lbl">Analysis Time (was hours)</div>
+      </div>
+      <div class="impact-cell">
+        <div class="val">50+ ECUs</div>
+        <div class="lbl">Supported per Log Session</div>
+      </div>
+    </div>
+
+    <!-- ── Problem / Solution ─────────────────────────────────────── -->
+    <div class="two-col">
+
+      <div class="card red-left">
+        <p class="section-label">Problem Statement</p>
+        <h3>Battery Drain After Key-Off</h3>
+        <ul class="pro-list red">
+          <li>After key-off, select ECUs continue transmitting NM messages, holding the CAN bus awake beyond the allowed timeout window.</li>
+          <li>Sustained bus activity exceeding 50 mA of parasitic current leads to dead-battery complaints and repeat warranty claims.</li>
+          <li>Manual log review across large traces (1,000–2,700+ messages, 50 ECUs) is time-consuming, error-prone, and inconsistent between engineers.</li>
+          <li>No standardised tooling exists within the team to triage NM violations from raw .asc / .csv logs without specialist software licences.</li>
+        </ul>
+      </div>
+
+      <div class="card green-left">
+        <p class="section-label">Proposed Solution</p>
+        <h3>Automated NM Violation Analyser</h3>
+        <ul class="pro-list green">
+          <li>A self-contained HTML/JavaScript tool that parses ASC (Vector CANalyzer) and CSV/TXT NM log files directly in the browser &mdash; no server or install required.</li>
+          <li>Automatically classifies each ECU as <em>Normal</em>, <em>Slow</em>, <em>Violation</em>, or <em>Stuck Awake</em> against configurable thresholds.</li>
+          <li>Generates a per-ECU timeline chart with a key-off marker, making evidence immediately legible for design reviews and fault reports.</li>
+          <li>Exports results as CSV or JSON for attachment to JIRA / DOORS or inclusion in warranty investigation reports.</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- ── Workflow ───────────────────────────────────────────────── -->
+    <div class="card accent-left" style="margin-bottom:22px;">
+      <p class="section-label">Analysis Workflow</p>
+      <div class="workflow">
+        <div class="wf-step">
+          <span class="wf-num">Step 01</span>
+          <span class="wf-title">Load Log</span>
+          <span class="wf-sub">Drag &amp; drop or paste ASC / CSV / TXT</span>
+        </div>
+        <div class="wf-step">
+          <span class="wf-num">Step 02</span>
+          <span class="wf-title">Configure</span>
+          <span class="wf-sub">Set key-off time, NM timeout, max wake limit</span>
+        </div>
+        <div class="wf-step">
+          <span class="wf-num">Step 03</span>
+          <span class="wf-title">Analyse</span>
+          <span class="wf-sub">Automatic classification of all ECUs</span>
+        </div>
+        <div class="wf-step">
+          <span class="wf-num">Step 04</span>
+          <span class="wf-title">Report</span>
+          <span class="wf-sub">Export CSV / JSON or print for review</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Features + Output Classification ─────────────────────── -->
+    <div class="two-col">
+
+      <div class="card accent-left">
+        <p class="section-label">Tool Capabilities</p>
+        <table class="feat-table">
+          <thead>
+            <tr><th>Capability</th><th>Detail</th><th>Type</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Log Parsing</strong></td>
+              <td>ASC (Vector), CSV, TXT formats</td>
+              <td><span class="tag blue">Input</span></td>
+            </tr>
+            <tr>
+              <td><strong>ECU Classification</strong></td>
+              <td>Normal / Slow / Violation / Stuck Awake</td>
+              <td><span class="tag blue">Core</span></td>
+            </tr>
+            <tr>
+              <td><strong>Timeline View</strong></td>
+              <td>Per-ECU state bar chart with key-off marker</td>
+              <td><span class="tag blue">Visual</span></td>
+            </tr>
+            <tr>
+              <td><strong>Configurable Thresholds</strong></td>
+              <td>Key-off time, NM timeout, max wake duration</td>
+              <td><span class="tag gold">Config</span></td>
+            </tr>
+            <tr>
+              <td><strong>Export</strong></td>
+              <td>CSV, JSON, Print-ready HTML report</td>
+              <td><span class="tag green">Output</span></td>
+            </tr>
+            <tr>
+              <td><strong>Performance</strong></td>
+              <td>50 ECUs / 2,700+ messages processed in-browser</td>
+              <td><span class="tag green">Scale</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card gold-left">
+        <p class="section-label">ECU Status Definitions</p>
+        <table class="feat-table">
+          <thead>
+            <tr><th>Status</th><th>Meaning</th><th>Action</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="tag green">NORMAL</span></td>
+              <td>Slept within NM timeout (&le;5 s default)</td>
+              <td>No action</td>
+            </tr>
+            <tr>
+              <td><span class="tag gold">SLOW</span></td>
+              <td>Slept within max wake time, but late</td>
+              <td>Monitor &mdash; review NM tuning</td>
+            </tr>
+            <tr>
+              <td><span class="tag blue">VIOLATION</span></td>
+              <td>Exceeded max wake time before sleeping</td>
+              <td>Investigate NM configuration</td>
+            </tr>
+            <tr>
+              <td style="color:var(--red);font-weight:700;">STUCK AWAKE</td>
+              <td>Never entered sleep mode in log window</td>
+              <td><strong>Critical &mdash; root cause required</strong></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style="margin-top:14px; padding:10px 14px; background:#fff8ee; border:1px solid #e6cc8a; border-radius:4px; font-size:.82rem; color:#6b4c10;">
+          <strong>Typical root causes for STUCK AWAKE:</strong> pending UDS diagnostic session (0x10 02),
+          incomplete OTA download, stuck NM state machine, or external wakeup via LIN sub-bus.
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Test Dataset Summary ──────────────────────────────────── -->
+    <div class="card accent-left" style="margin-bottom:22px;">
+      <p class="section-label">Validated Test Datasets (included in package)</p>
+      <table class="feat-table">
+        <thead>
+          <tr><th>File</th><th>ECUs</th><th>Scenario</th><th>Expected Outcome</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>01_normal_shutdown_PASS.csv</code></td>
+            <td>8</td>
+            <td>Baseline &mdash; all ECUs sleep correctly</td>
+            <td><span class="tag green">0 violations</span></td>
+          </tr>
+          <tr>
+            <td><code>02_multiple_violators_FAIL.csv</code></td>
+            <td>15</td>
+            <td>Mixed good / bad ECU mix</td>
+            <td>7 violations (3 slow, 4 stuck)</td>
+          </tr>
+          <tr>
+            <td><code>03_vector_asc_format.asc</code></td>
+            <td>8</td>
+            <td>Real Vector CANalyzer ASC format</td>
+            <td>2 stuck (EPS, ABS)</td>
+          </tr>
+          <tr>
+            <td><code>04_edge_cases.csv</code></td>
+            <td>7</td>
+            <td>Re-wake, flapping, border-line timing</td>
+            <td>Mixed &mdash; robustness validation</td>
+          </tr>
+          <tr>
+            <td><code>05_realworld_complex_25ECUs.csv</code></td>
+            <td>25</td>
+            <td>Full-vehicle network simulation</td>
+            <td>8 violations (4 slow, 4 stuck)</td>
+          </tr>
+          <tr>
+            <td><code>06_stress_test_50ECUs.csv</code></td>
+            <td>50</td>
+            <td>Stress test &mdash; 2,700+ messages</td>
+            <td>15 violations (8 slow, 7 stuck)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── File Manifest ─────────────────────────────────────────── -->
+    <div style="margin-bottom:22px;">
+      <p class="section-label">Package Contents</p>
+      <div class="manifest">
+        <div class="manifest-item">
+          <div class="file-name">KeyOffLoad_Diagnostic_Tool.html</div>
+          <div class="file-desc">Main tool &mdash; open directly in any modern browser. No installation required.</div>
+        </div>
+        <div class="manifest-item">
+          <div class="file-name">Expo_OnePager.html</div>
+          <div class="file-desc">This document. Print via Ctrl/Cmd+P for handout distribution.</div>
+        </div>
+        <div class="manifest-item">
+          <div class="file-name">Expo_Showcase_Presentation.pptx</div>
+          <div class="file-desc">Formatted slide deck for live expo walkthrough and management briefings.</div>
+        </div>
+        <div class="manifest-item">
+          <div class="file-name">OUTPUT_ANALYSIS_GUIDE.md</div>
+          <div class="file-desc">Step-by-step guide to interpreting diagnostic output and classifying findings.</div>
+        </div>
+        <div class="manifest-item">
+          <div class="file-name">test_data/</div>
+          <div class="file-desc">Six validation datasets covering baseline, multi-violation, ASC format, edge cases, and stress.</div>
+        </div>
+        <div class="manifest-item">
+          <div class="file-name">README.md</div>
+          <div class="file-desc">Quick-start instructions, feature overview, and repository structure reference.</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /body-content -->
+
+  <!-- ── CTA Strip ──────────────────────────────────────────────── -->
+  <div class="cta-strip">
+    <div class="cta-left">
+      <strong>Live Demo &mdash; Try It Now</strong>
+      <p>Open <code style="color:#cce6f8;">KeyOffLoad_Diagnostic_Tool.html</code> in Chrome, Edge, or Firefox.
+         Click <strong>Load Demo Data</strong> then <strong>Analyse Log</strong> to see results instantly.
+         No network connection required.</p>
+    </div>
+    <div class="cta-steps">
+      <div class="cta-step"><div class="cta-n">1</div><p>Open HTML in browser</p></div>
+      <div class="cta-step"><div class="cta-n">2</div><p>Load demo or your log</p></div>
+      <div class="cta-step"><div class="cta-n">3</div><p>Set key-off timestamp</p></div>
+      <div class="cta-step"><div class="cta-n">4</div><p>Analyse &amp; export</p></div>
+    </div>
   </div>
+
+  <!-- ── Footer ────────────────────────────────────────────────── -->
+  <footer class="page-footer">
+    <span>Key-Off Load / NM Wake Diagnostic Tool &mdash; Engineering Expo 2025</span>
+    <span>100% browser-based &bull; No installation &bull; No data transmitted &bull; Fully offline</span>
+    <span>Print: Ctrl / Cmd + P</span>
+  </footer>
+
+</div>
 </body>
 </html>
