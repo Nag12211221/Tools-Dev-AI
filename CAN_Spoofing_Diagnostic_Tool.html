@@ -27,6 +27,8 @@
         </div>
     </div>
     <script>
+        const ANOMALY_THRESHOLD_S = 0.005; // 5ms threshold for high-frequency spoofing
+
         function loadDemo() {
             document.getElementById('logInput').value = "0.001 100 8 FF FF FF FF FF FF FF FF\n0.010 100 8 FF FF FF FF FF FF FF FF\n0.011 100 8 00 00 00 00 00 00 00 00\n0.012 100 8 00 00 00 00 00 00 00 00\n0.020 100 8 FF FF FF FF FF FF FF FF";
         }
@@ -42,9 +44,8 @@
                     const id = parts[1];
                     if(lastTime[id] !== undefined) {
                         const delta = time - lastTime[id];
-                        // 5ms threshold is used here as a standard check for high-frequency spoofing.
-                        // Can be made configurable in future iterations.
-                        if (delta < 0.005) {
+                        // Check against configured threshold
+                        if (delta < ANOMALY_THRESHOLD_S) {
                             output += `<li><span style="color:red">Anomaly detected</span> at ${time}s: Message ${id} arrived too fast (delta: ${delta.toFixed(4)}s)</li>`;
                             anomalies++;
                         }
