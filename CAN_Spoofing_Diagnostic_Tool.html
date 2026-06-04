@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAN Bus Spoofing & Injection Diagnostic Tool v2.0</title>
+    <style>
+        :root {
+            --bg-primary: #0f1419;
+            --bg-secondary: #1a2332;
+            --bg-card: #1e2d3d;
+            --bg-input: #0d1b2a;
+            --accent: #00d4ff;
+            --accent-hover: #00a8cc;
+            --danger: #ff4757;
+            --warning: #ffa502;
+            --success: #2ed573;
+            --text-primary: #e8f4fd;
+            --text-secondary: #8899a6;
+            --border: #2d4a5e;
+            --shadow: rgba(0, 0, 0, 0.4);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(135deg, #0a1628, #1a2332);
+            border-bottom: 2px solid var(--accent);
+            padding: 20px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header h1 {
+            font-size: 1.6rem;
+            color: var(--accent);
+            letter-spacing: 1px;
+        }
+        .header .badge {
+            background: var(--accent);
+            color: var(--bg-primary);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+        .full-width { grid-column: 1 / -1; }
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 20px var(--shadow);
+        }
+        .card h2 {
+            color: var(--accent);
+            font-size: 1.1rem;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card h2::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 20px;
+            background: var(--accent);
+            border-radius: 2px;
+        }
+        textarea {
+            width: 100%;
+            height: 220px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.85rem;
+            padding: 14px;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+        textarea:focus { outline: none; border-color: var(--accent); }
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-primary { background: var(--accent); color: var(--bg-primary); }
+        .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+        .btn-secondary { background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border); }
+        .btn-secondary:hover { border-color: var(--accent); }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { background: #e84040; }
+        .btn-success { background: var(--success); color: var(--bg-primary); }
+        .btn-success:hover { background: #26b968; }
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 12px;
+        }
+        .config-item label {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .config-item input, .config-item select {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+        .config-item input:focus, .config-item select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+        }
+        .stat-card {
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .stat-card .label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .stat-normal .value { color: var(--success); }
+        .stat-suspicious .value { color: var(--warning); }
+        .stat-spoofed .value { color: var(--danger); }
+        .stat-total .value { color: var(--accent); }
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+            font-size: 0.85rem;
+        }
+        .results-table th {
+            background: var(--bg-secondary);
+            padding: 12px;
+            text-align: left;
+            color: var(--accent);
+            border-bottom: 2px solid var(--border);
+            position: sticky;
+            top: 0;
+        }
+        .results-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        .results-table tr:hover { background: rgba(0, 212, 255, 0.05); }
+        .severity-badge {
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .severity-normal { background: rgba(46, 213, 115, 0.15); color: var(--success); }
+        .severity-suspicious { background: rgba(255, 165, 2, 0.15); color: var(--warning); }
+        .severity-spoofed { background: rgba(255, 71, 87, 0.15); color: var(--danger); }
+        .severity-critical { background: rgba(255, 71, 87, 0.3); color: #ff6b7a; }
+        .table-wrapper {
+            max-height: 400px;
+            overflow-y: auto;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        .table-wrapper::-webkit-scrollbar { width: 8px; }
+        .table-wrapper::-webkit-scrollbar-track { background: var(--bg-secondary); }
+        .table-wrapper::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        .timeline-bar {
+            height: 24px;
+            background: var(--bg-input);
+            border-radius: 4px;
+            margin: 4px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .timeline-marker {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            min-width: 3px;
+            border-radius: 2px;
+        }
+        .chart-container {
+            width: 100%;
+            height: 250px;
+            position: relative;
+            margin-top: 12px;
+        }
+        canvas { width: 100% !important; height: 100% !important; }
+        .file-drop {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 12px;
+        }
+        .file-drop:hover, .file-drop.dragover {
+            border-color: var(--accent);
+            background: rgba(0, 212, 255, 0.05);
+        }
+        .summary-section {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+            border-left: 4px solid var(--accent);
+        }
+        .summary-section h3 {
+            color: var(--accent);
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+        .summary-section p {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-input);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+        .tab-bar {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0;
+        }
+        .tab {
+            padding: 10px 18px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab:hover { color: var(--text-primary); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .legend { display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text-secondary); }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+        @media (max-width: 900px) {
+            .main-container { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🛡️ CAN Bus Spoofing & Injection Diagnostic Tool</h1>
+        <span class="badge">v2.0 PROFESSIONAL</span>
+    </div>
+
+    <div class="main-container">
+        <!-- Input Section -->
+        <div class="card">
+            <h2>Log Input</h2>
+            <div class="file-drop" id="fileDrop" onclick="document.getElementById('fileInput').click()">
+                📁 Drag & drop log file here or click to browse<br>
+                <small>Supports .asc, .csv, .txt, .log formats</small>
+            </div>
+            <input type="file" id="fileInput" accept=".asc,.csv,.txt,.log" style="display:none" onchange="handleFile(event)">
+            <textarea id="logInput" placeholder="Or paste CAN log data here...&#10;&#10;Supported formats:&#10;  Timestamp  ID  DLC  Data bytes&#10;  0.001  0x100  8  FF FF FF FF FF FF FF FF&#10;  0.010  0x100  8  FF FF FF FF FF FF FF FF"></textarea>
+            <div class="controls">
+                <button class="btn btn-primary" onclick="analyzeLog()">▶ Analyze Log</button>
+                <button class="btn btn-secondary" onclick="loadDemo('normal')">📋 Normal Data</button>
+                <button class="btn btn-secondary" onclick="loadDemo('attack')">⚠️ Attack Data</button>
+                <button class="btn btn-secondary" onclick="loadDemo('complex')">🔬 Complex Mix</button>
+                <button class="btn btn-danger" onclick="clearAll()">✕ Clear</button>
+            </div>
+        </div>
+
+        <!-- Configuration -->
+        <div class="card">
+            <h2>Configuration</h2>
+            <div class="config-grid">
+                <div class="config-item">
+                    <label>Spoofing Threshold (ms)</label>
+                    <input type="number" id="thresholdMs" value="5" min="1" max="100" step="1">
+                </div>
+                <div class="config-item">
+                    <label>Suspicious Threshold (ms)</label>
+                    <input type="number" id="suspiciousMs" value="8" min="1" max="200" step="1">
+                </div>
+                <div class="config-item">
+                    <label>Min Messages for Analysis</label>
+                    <input type="number" id="minMessages" value="3" min="2" max="50" step="1">
+                </div>
+                <div class="config-item">
+                    <label>Analysis Mode</label>
+                    <select id="analysisMode">
+                        <option value="timing">Timing Analysis</option>
+                        <option value="frequency">Frequency Analysis</option>
+                        <option value="payload">Payload Anomaly</option>
+                        <option value="comprehensive">Comprehensive (All)</option>
+                    </select>
+                </div>
+                <div class="config-item">
+                    <label>Baseline Window (s)</label>
+                    <input type="number" id="baselineWindow" value="1.0" min="0.1" max="10" step="0.1">
+                </div>
+                <div class="config-item">
+                    <label>Report Severity Filter</label>
+                    <select id="severityFilter">
+                        <option value="all">All Levels</option>
+                        <option value="suspicious">Suspicious & Above</option>
+                        <option value="spoofed">Spoofed & Critical Only</option>
+                    </select>
+                </div>
+            </div>
+            <div class="summary-section" style="margin-top:18px;">
+                <h3>How It Works</h3>
+                <p>This tool detects spoofed CAN messages by analyzing inter-message timing intervals. Legitimate ECUs transmit at predictable periodic rates. Injected messages arrive faster than expected, violating timing constraints. The tool classifies each CAN ID based on observed intervals vs. configured thresholds.</p>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="card full-width">
+            <h2>Analysis Summary</h2>
+            <div class="stats-grid">
+                <div class="stat-card stat-total"><div class="value" id="statTotal">—</div><div class="label">Total Messages</div></div>
+                <div class="stat-card stat-total"><div class="value" id="statIDs">—</div><div class="label">Unique CAN IDs</div></div>
+                <div class="stat-card stat-normal"><div class="value" id="statNormal">—</div><div class="label">Normal IDs</div></div>
+                <div class="stat-card stat-suspicious"><div class="value" id="statSuspicious">—</div><div class="label">Suspicious IDs</div></div>
+                <div class="stat-card stat-spoofed"><div class="value" id="statSpoofed">—</div><div class="label">Spoofed IDs</div></div>
+                <div class="stat-card stat-spoofed"><div class="value" id="statAnomalies">—</div><div class="label">Anomaly Events</div></div>
+                <div class="stat-card stat-total"><div class="value" id="statDuration">—</div><div class="label">Log Duration (s)</div></div>
+                <div class="stat-card stat-total"><div class="value" id="statRate">—</div><div class="label">Avg Msg/s</div></div>
+            </div>
+            <div class="progress-bar" id="healthBar">
+                <div class="progress-fill" id="healthFill" style="width:0%;background:var(--success)"></div>
+            </div>
+            <small id="healthLabel" style="color:var(--text-secondary);margin-top:6px;display:block;">Network health: waiting for analysis...</small>
+        </div>
+
+        <!-- Detailed Results -->
+        <div class="card full-width">
+            <h2>Detailed Results</h2>
+            <div class="tab-bar">
+                <div class="tab active" onclick="switchTab('tabMessages')">Messages</div>
+                <div class="tab" onclick="switchTab('tabTimeline')">Timeline</div>
+                <div class="tab" onclick="switchTab('tabPerID')">Per-ID Analysis</div>
+                <div class="tab" onclick="switchTab('tabExport')">Export</div>
+            </div>
+            <div class="tab-content active" id="tabMessages">
+                <div class="table-wrapper">
+                    <table class="results-table" id="resultsTable">
+                        <thead><tr><th>#</th><th>Timestamp</th><th>CAN ID</th><th>DLC</th><th>Data</th><th>Delta (ms)</th><th>Severity</th></tr></thead>
+                        <tbody id="resultsBody"><tr><td colspan="7" style="text-align:center;color:var(--text-secondary)">Run analysis to see results</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="tab-content" id="tabTimeline">
+                <div id="timelineContainer"><p style="color:var(--text-secondary)">Run analysis to see timeline</p></div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-dot" style="background:var(--success)"></div>Normal</div>
+                    <div class="legend-item"><div class="legend-dot" style="background:var(--warning)"></div>Suspicious</div>
+                    <div class="legend-item"><div class="legend-dot" style="background:var(--danger)"></div>Spoofed</div>
+                </div>
+            </div>
+            <div class="tab-content" id="tabPerID">
+                <div class="table-wrapper">
+                    <table class="results-table" id="perIdTable">
+                        <thead><tr><th>CAN ID</th><th>Count</th><th>Avg Interval (ms)</th><th>Min Interval (ms)</th><th>Max Interval (ms)</th><th>Std Dev</th><th>Anomalies</th><th>Classification</th></tr></thead>
+                        <tbody id="perIdBody"><tr><td colspan="8" style="text-align:center;color:var(--text-secondary)">Run analysis to see per-ID breakdown</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="tab-content" id="tabExport">
+                <p style="color:var(--text-secondary);margin-bottom:16px;">Export analysis results in your preferred format:</p>
+                <div class="controls">
+                    <button class="btn btn-success" onclick="exportCSV()">📊 Export CSV</button>
+                    <button class="btn btn-success" onclick="exportJSON()">📄 Export JSON</button>
+                    <button class="btn btn-success" onclick="exportReport()">📝 Full Report (TXT)</button>
+                    <button class="btn btn-secondary" onclick="printReport()">🖨️ Print Report</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Recommendation -->
+        <div class="card full-width">
+            <h2>Diagnostic Recommendation</h2>
+            <div id="recommendation" class="summary-section">
+                <h3>Awaiting Analysis</h3>
+                <p>Load a CAN log and run analysis to receive diagnostic recommendations based on the detected patterns.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ===== CONFIGURATION =====
+    let analysisResults = null;
+
+    // ===== FILE HANDLING =====
+    const fileDrop = document.getElementById('fileDrop');
+    fileDrop.addEventListener('dragover', (e) => { e.preventDefault(); fileDrop.classList.add('dragover'); });
+    fileDrop.addEventListener('dragleave', () => fileDrop.classList.remove('dragover'));
+    fileDrop.addEventListener('drop', (e) => {
+        e.preventDefault();
+        fileDrop.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file) readFile(file);
+    });
+
+    function handleFile(event) {
+        const file = event.target.files[0];
+        if (file) readFile(file);
+    }
+
+    function readFile(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => { document.getElementById('logInput').value = e.target.result; };
+        reader.readAsText(file);
+    }
+
+    // ===== DEMO DATA =====
+    function loadDemo(type) {
+        const demos = {
+            normal: generateNormalData(),
+            attack: generateAttackData(),
+            complex: generateComplexData()
+        };
+        document.getElementById('logInput').value = demos[type];
+    }
+
+    function generateNormalData() {
+        let lines = [];
+        const ids = ['100', '200', '300', '400', '500'];
+        const intervals = [0.010, 0.020, 0.050, 0.100, 0.005];
+        let times = [0, 0, 0, 0, 0];
+        for (let i = 0; i < 200; i++) {
+            const idx = i % ids.length;
+            times[idx] += intervals[idx] + (Math.random() - 0.5) * intervals[idx] * 0.1;
+            const data = Array.from({length: 8}, () => Math.floor(Math.random()*256).toString(16).toUpperCase().padStart(2,'0')).join(' ');
+            lines.push(`${times[idx].toFixed(6)} ${ids[idx]} 8 ${data}`);
+        }
+        return lines.sort((a,b) => parseFloat(a) - parseFloat(b)).join('\n');
+    }
+
+    function generateAttackData() {
+        let lines = [];
+        let t = 0.0;
+        // Normal traffic
+        for (let i = 0; i < 50; i++) {
+            t += 0.010 + Math.random() * 0.002;
+            lines.push(`${t.toFixed(6)} 100 8 ${randomData()}`);
+        }
+        // Injection attack on ID 100 (burst of rapid messages)
+        const attackStart = t;
+        for (let i = 0; i < 40; i++) {
+            t += 0.0005 + Math.random() * 0.001; // 0.5-1.5ms intervals (way too fast)
+            lines.push(`${t.toFixed(6)} 100 8 00 00 00 00 00 00 00 00`);
+        }
+        // Normal traffic resumes
+        for (let i = 0; i < 50; i++) {
+            t += 0.010 + Math.random() * 0.002;
+            lines.push(`${t.toFixed(6)} 100 8 ${randomData()}`);
+        }
+        // Add some other normal IDs
+        let t2 = 0.0;
+        for (let i = 0; i < 80; i++) {
+            t2 += 0.020 + Math.random() * 0.003;
+            lines.push(`${t2.toFixed(6)} 200 8 ${randomData()}`);
+        }
+        return lines.sort((a,b) => parseFloat(a) - parseFloat(b)).join('\n');
+    }
+
+    function generateComplexData() {
+        let lines = [];
+        let t = 0;
+        const ids = ['0x100','0x1A0','0x200','0x2B0','0x300','0x3FF','0x400','0x500','0x600','0x7E0'];
+        const baseIntervals = [0.010, 0.020, 0.050, 0.100, 0.005, 0.010, 0.020, 0.050, 0.100, 0.200];
+        let times = new Array(10).fill(0);
+        // Generate 500 messages with some IDs being spoofed
+        for (let i = 0; i < 500; i++) {
+            const idx = i % ids.length;
+            let interval = baseIntervals[idx];
+            // Simulate spoofing on IDs 0x1A0 and 0x3FF after message 200
+            if ((idx === 1 || idx === 5) && i > 200 && i < 350) {
+                interval = 0.001 + Math.random() * 0.002; // Injected: 1-3ms
+            }
+            times[idx] += interval + (Math.random() - 0.5) * interval * 0.08;
+            lines.push(`${times[idx].toFixed(6)} ${ids[idx]} 8 ${randomData()}`);
+        }
+        return lines.sort((a,b) => parseFloat(a) - parseFloat(b)).join('\n');
+    }
+
+    function randomData() {
+        return Array.from({length:8}, () => Math.floor(Math.random()*256).toString(16).toUpperCase().padStart(2,'0')).join(' ');
+    }
+
+    // ===== CORE ANALYSIS ENGINE =====
+    function analyzeLog() {
+        const input = document.getElementById('logInput').value.trim();
+        if (!input) { alert('Please load or paste log data first.'); return; }
+
+        const spoofThreshold = parseFloat(document.getElementById('thresholdMs').value) / 1000;
+        const suspiciousThreshold = parseFloat(document.getElementById('suspiciousMs').value) / 1000;
+        const minMessages = parseInt(document.getElementById('minMessages').value);
+        const mode = document.getElementById('analysisMode').value;
+
+        const lines = input.split('\n').filter(l => l.trim().length > 0);
+        const messages = [];
+
+        // Parse messages
+        lines.forEach((line, i) => {
+            const parts = line.trim().split(/[\s,;]+/);
+            if (parts.length >= 3) {
+                const time = parseFloat(parts[0]);
+                if (isNaN(time)) return;
+                const id = parts[1].replace('0x','').toUpperCase();
+                const dlc = parseInt(parts[2]) || 8;
+                const data = parts.slice(3, 3 + dlc).join(' ');
+                messages.push({ time, id, dlc, data, lineNum: i + 1 });
+            }
+        });
+
+        if (messages.length < 2) { alert('Not enough valid messages to analyze.'); return; }
+
+        // Sort by timestamp
+        messages.sort((a, b) => a.time - b.time);
+
+        // Per-ID analysis
+        const idStats = {};
+        messages.forEach(msg => {
+            if (!idStats[msg.id]) {
+                idStats[msg.id] = { count: 0, times: [], intervals: [], anomalies: 0, data: [] };
+            }
+            const stat = idStats[msg.id];
+            if (stat.times.length > 0) {
+                const delta = msg.time - stat.times[stat.times.length - 1];
+                stat.intervals.push(delta);
+                if (delta < spoofThreshold) {
+                    stat.anomalies++;
+                    msg.severity = 'spoofed';
+                    msg.delta = delta;
+                } else if (delta < suspiciousThreshold) {
+                    msg.severity = 'suspicious';
+                    msg.delta = delta;
+                } else {
+                    msg.severity = 'normal';
+                    msg.delta = delta;
+                }
+            } else {
+                msg.severity = 'first';
+                msg.delta = null;
+            }
+            stat.count++;
+            stat.times.push(msg.time);
+            stat.data.push(msg.data);
+        });
+
+        // Classify each ID
+        Object.keys(idStats).forEach(id => {
+            const s = idStats[id];
+            if (s.intervals.length === 0) { s.classification = 'insufficient'; return; }
+            s.avgInterval = s.intervals.reduce((a,b) => a+b, 0) / s.intervals.length;
+            s.minInterval = Math.min(...s.intervals);
+            s.maxInterval = Math.max(...s.intervals);
+            s.stdDev = Math.sqrt(s.intervals.reduce((sum, v) => sum + Math.pow(v - s.avgInterval, 2), 0) / s.intervals.length);
+            if (s.anomalies > s.count * 0.3) s.classification = 'spoofed';
+            else if (s.anomalies > 0) s.classification = 'suspicious';
+            else s.classification = 'normal';
+        });
+
+        // Compute stats
+        const totalMessages = messages.length;
+        const uniqueIDs = Object.keys(idStats).length;
+        const duration = messages[messages.length-1].time - messages[0].time;
+        const normalIDs = Object.values(idStats).filter(s => s.classification === 'normal').length;
+        const suspiciousIDs = Object.values(idStats).filter(s => s.classification === 'suspicious').length;
+        const spoofedIDs = Object.values(idStats).filter(s => s.classification === 'spoofed').length;
+        const totalAnomalies = Object.values(idStats).reduce((sum, s) => sum + s.anomalies, 0);
+
+        // Update UI
+        document.getElementById('statTotal').textContent = totalMessages;
+        document.getElementById('statIDs').textContent = uniqueIDs;
+        document.getElementById('statNormal').textContent = normalIDs;
+        document.getElementById('statSuspicious').textContent = suspiciousIDs;
+        document.getElementById('statSpoofed').textContent = spoofedIDs;
+        document.getElementById('statAnomalies').textContent = totalAnomalies;
+        document.getElementById('statDuration').textContent = duration.toFixed(3);
+        document.getElementById('statRate').textContent = (totalMessages / Math.max(duration, 0.001)).toFixed(1);
+
+        // Health bar
+        const healthPct = Math.max(0, 100 - (totalAnomalies / totalMessages * 100 * 5));
+        const healthFill = document.getElementById('healthFill');
+        healthFill.style.width = healthPct + '%';
+        healthFill.style.background = healthPct > 80 ? 'var(--success)' : healthPct > 50 ? 'var(--warning)' : 'var(--danger)';
+        document.getElementById('healthLabel').textContent = `Network health score: ${healthPct.toFixed(1)}% — ${healthPct > 80 ? 'Good' : healthPct > 50 ? 'Degraded' : 'Under Attack'}`;
+
+        // Messages table
+        const severityFilter = document.getElementById('severityFilter').value;
+        let filtered = messages.filter(m => {
+            if (severityFilter === 'all') return true;
+            if (severityFilter === 'suspicious') return m.severity === 'suspicious' || m.severity === 'spoofed';
+            if (severityFilter === 'spoofed') return m.severity === 'spoofed';
+            return true;
+        });
+
+        let tbody = '';
+        filtered.slice(0, 500).forEach((msg, i) => {
+            const sevClass = msg.severity === 'first' ? 'normal' : msg.severity;
+            const deltaStr = msg.delta !== null ? (msg.delta * 1000).toFixed(3) : '—';
+            tbody += `<tr><td>${i+1}</td><td>${msg.time.toFixed(6)}</td><td>${msg.id}</td><td>${msg.dlc}</td><td style="font-family:monospace;font-size:0.8rem">${msg.data}</td><td>${deltaStr}</td><td><span class="severity-badge severity-${sevClass}">${msg.severity}</span></td></tr>`;
+        });
+        document.getElementById('resultsBody').innerHTML = tbody || '<tr><td colspan="7">No messages match filter</td></tr>';
+
+        // Per-ID table
+        let perIdHtml = '';
+        Object.keys(idStats).sort().forEach(id => {
+            const s = idStats[id];
+            if (s.intervals.length === 0) return;
+            const classClass = s.classification === 'normal' ? 'normal' : s.classification === 'suspicious' ? 'suspicious' : 'spoofed';
+            perIdHtml += `<tr><td>${id}</td><td>${s.count}</td><td>${(s.avgInterval*1000).toFixed(3)}</td><td>${(s.minInterval*1000).toFixed(3)}</td><td>${(s.maxInterval*1000).toFixed(3)}</td><td>${(s.stdDev*1000).toFixed(3)}</td><td>${s.anomalies}</td><td><span class="severity-badge severity-${classClass}">${s.classification}</span></td></tr>`;
+        });
+        document.getElementById('perIdBody').innerHTML = perIdHtml;
+
+        // Timeline
+        renderTimeline(messages, idStats, duration);
+
+        // Recommendation
+        generateRecommendation(idStats, totalAnomalies, totalMessages, duration);
+
+        // Store for export
+        analysisResults = { messages, idStats, totalMessages, uniqueIDs, duration, totalAnomalies };
+    }
+
+    // ===== TIMELINE RENDERING =====
+    function renderTimeline(messages, idStats, duration) {
+        const container = document.getElementById('timelineContainer');
+        let html = '';
+        Object.keys(idStats).sort().forEach(id => {
+            const s = idStats[id];
+            const color = s.classification === 'normal' ? 'var(--success)' : s.classification === 'suspicious' ? 'var(--warning)' : 'var(--danger)';
+            html += `<div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">`;
+            html += `<span style="width:60px;font-size:0.8rem;color:var(--text-secondary);text-align:right">${id}</span>`;
+            html += `<div class="timeline-bar" style="flex:1">`;
+            s.times.forEach(t => {
+                const pct = ((t - messages[0].time) / Math.max(duration, 0.001)) * 100;
+                html += `<div class="timeline-marker" style="left:${pct}%;width:2px;background:${color}"></div>`;
+            });
+            html += `</div></div>`;
+        });
+        container.innerHTML = html || '<p style="color:var(--text-secondary)">No data</p>';
+    }
+
+    // ===== RECOMMENDATION ENGINE =====
+    function generateRecommendation(idStats, totalAnomalies, totalMessages, duration) {
+        const spoofedIds = Object.entries(idStats).filter(([_,s]) => s.classification === 'spoofed');
+        const suspiciousIds = Object.entries(idStats).filter(([_,s]) => s.classification === 'suspicious');
+        let html = '';
+
+        if (spoofedIds.length > 0) {
+            html += `<h3 style="color:var(--danger)">⚠️ SPOOFING ATTACK DETECTED</h3>`;
+            html += `<p><strong>Affected CAN IDs:</strong> ${spoofedIds.map(([id]) => id).join(', ')}<br>`;
+            html += `<strong>Total anomalous messages:</strong> ${totalAnomalies} out of ${totalMessages} (${(totalAnomalies/totalMessages*100).toFixed(1)}%)<br>`;
+            html += `<strong>Attack duration:</strong> Anomalies span across ${duration.toFixed(3)}s of captured traffic.<br><br>`;
+            html += `<strong>Recommended Actions:</strong><br>`;
+            html += `1. Isolate affected ECU(s) transmitting on ID(s): ${spoofedIds.map(([id]) => id).join(', ')}<br>`;
+            html += `2. Check physical CAN bus connections for unauthorized tap points<br>`;
+            html += `3. Review gateway firewall rules for affected message IDs<br>`;
+            html += `4. Enable MAC-based authentication (SecOC) for critical messages<br>`;
+            html += `5. Deploy intrusion detection system (IDS) with real-time alerting</p>`;
+        } else if (suspiciousIds.length > 0) {
+            html += `<h3 style="color:var(--warning)">⚡ Suspicious Activity Detected</h3>`;
+            html += `<p>Some CAN IDs show irregular timing but do not conclusively indicate spoofing.<br>`;
+            html += `<strong>Affected IDs:</strong> ${suspiciousIds.map(([id]) => id).join(', ')}<br>`;
+            html += `<strong>Recommendation:</strong> Monitor these IDs over a longer capture window. Consider tightening detection thresholds or implementing rate limiting on the gateway.</p>`;
+        } else {
+            html += `<h3 style="color:var(--success)">✅ Network Appears Healthy</h3>`;
+            html += `<p>No timing anomalies detected. All CAN IDs are transmitting within expected intervals. Continue periodic monitoring as part of standard cybersecurity practice.</p>`;
+        }
+        document.getElementById('recommendation').innerHTML = html;
+    }
+
+    // ===== EXPORT FUNCTIONS =====
+    function exportCSV() {
+        if (!analysisResults) { alert('Run analysis first.'); return; }
+        let csv = 'Timestamp,CAN_ID,DLC,Data,Delta_ms,Severity\n';
+        analysisResults.messages.forEach(m => {
+            csv += `${m.time.toFixed(6)},${m.id},${m.dlc},"${m.data}",${m.delta !== null ? (m.delta*1000).toFixed(3) : ''},${m.severity}\n`;
+        });
+        downloadFile(csv, 'can_analysis_results.csv', 'text/csv');
+    }
+
+    function exportJSON() {
+        if (!analysisResults) { alert('Run analysis first.'); return; }
+        const data = {
+            summary: {
+                totalMessages: analysisResults.totalMessages,
+                uniqueIDs: analysisResults.uniqueIDs,
+                duration: analysisResults.duration,
+                totalAnomalies: analysisResults.totalAnomalies
+            },
+            perIdAnalysis: analysisResults.idStats,
+            messages: analysisResults.messages.map(m => ({
+                timestamp: m.time, canId: m.id, dlc: m.dlc, data: m.data, delta: m.delta, severity: m.severity
+            }))
+        };
+        downloadFile(JSON.stringify(data, null, 2), 'can_analysis_results.json', 'application/json');
+    }
+
+    function exportReport() {
+        if (!analysisResults) { alert('Run analysis first.'); return; }
+        let report = '=== CAN BUS SPOOFING DIAGNOSTIC REPORT ===\n';
+        report += `Generated: ${new Date().toISOString()}\n\n`;
+        report += `SUMMARY\n${'='.repeat(40)}\n`;
+        report += `Total Messages Analyzed: ${analysisResults.totalMessages}\n`;
+        report += `Unique CAN IDs: ${analysisResults.uniqueIDs}\n`;
+        report += `Log Duration: ${analysisResults.duration.toFixed(3)}s\n`;
+        report += `Total Anomalies: ${analysisResults.totalAnomalies}\n\n`;
+        report += `PER-ID BREAKDOWN\n${'='.repeat(40)}\n`;
+        Object.entries(analysisResults.idStats).sort().forEach(([id, s]) => {
+            if (s.intervals.length === 0) return;
+            report += `\nCAN ID: ${id}\n`;
+            report += `  Messages: ${s.count}\n`;
+            report += `  Avg Interval: ${(s.avgInterval*1000).toFixed(3)} ms\n`;
+            report += `  Min Interval: ${(s.minInterval*1000).toFixed(3)} ms\n`;
+            report += `  Anomalies: ${s.anomalies}\n`;
+            report += `  Classification: ${s.classification.toUpperCase()}\n`;
+        });
+        downloadFile(report, 'can_diagnostic_report.txt', 'text/plain');
+    }
+
+    function printReport() {
+        window.print();
+    }
+
+    function downloadFile(content, filename, mime) {
+        const blob = new Blob([content], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    // ===== UI HELPERS =====
+    function clearAll() {
+        document.getElementById('logInput').value = '';
+        document.getElementById('resultsBody').innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-secondary)">Run analysis to see results</td></tr>';
+        document.getElementById('perIdBody').innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-secondary)">Run analysis to see per-ID breakdown</td></tr>';
+        document.getElementById('timelineContainer').innerHTML = '<p style="color:var(--text-secondary)">Run analysis to see timeline</p>';
+        ['statTotal','statIDs','statNormal','statSuspicious','statSpoofed','statAnomalies','statDuration','statRate'].forEach(id => document.getElementById(id).textContent = '—');
+        document.getElementById('healthFill').style.width = '0%';
+        document.getElementById('healthLabel').textContent = 'Network health: waiting for analysis...';
+        document.getElementById('recommendation').innerHTML = '<h3>Awaiting Analysis</h3><p>Load a CAN log and run analysis to receive diagnostic recommendations.</p>';
+        analysisResults = null;
+    }
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.target.classList.add('active');
+    }
+    </script>
+</body>
+</html>
